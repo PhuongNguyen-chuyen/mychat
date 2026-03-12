@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Groups</title>
+</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+
+<h2>Groups</h2>
+
+<input id="groupName" placeholder="Group name">
+
+<button onclick="createGroup()">Create</button>
+
+<div id="groups"></div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+function loadGroups(){
+
+fetch("/api/groups/"+user.id)
+
+.then(res=>res.json())
+
+.then(data=>{
+
+const box=document.getElementById("groups");
+
+box.innerHTML="";
+
+data.forEach(g=>{
+
+box.innerHTML+=`
+<div>
+${g.name}
+</div>
+`;
+
+});
+
+});
+
+}
+
+function createGroup(){
+
+fetch("/api/groups/create",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+name:groupName.value,
+creator:user.id
+
+})
+
+})
+
+.then(()=>{
+
+loadGroups();
+
+});
+
+}
+
+loadGroups();
+
+</script>
+
+</body>
+</html>

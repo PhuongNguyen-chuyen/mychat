@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<title>Profile</title>
+
+<link rel="stylesheet" href="../css/home.css">
+
+<style>
+
+.profile-page{
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.profile-card-big{
+background:white;
+padding:30px;
+border-radius:15px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+width:350px;
+text-align:center;
+}
+
+.profile-avatar{
+width:90px;
+height:90px;
+border-radius:50%;
+background:#a855f7;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:35px;
+color:white;
+margin:auto;
+overflow:hidden;
+cursor:pointer;
+}
+
+.profile-avatar img{
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:50%;
+}
+
+.profile-card-big input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid #ddd;
+}
+
+.saveBtn{
+margin-top:15px;
+background:#a855f7;
+color:white;
+border:none;
+padding:10px;
+width:100%;
+border-radius:10px;
+cursor:pointer;
+}
+
+.backBtn{
+margin-top:10px;
+background:#ccc;
+border:none;
+padding:8px;
+width:100%;
+border-radius:8px;
+cursor:pointer;
+}
+
+.uploadBtn{
+margin-top:10px;
+background:#6c5ce7;
+color:white;
+border:none;
+padding:8px;
+width:100%;
+border-radius:8px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+
+<div class="profile-page">
+
+<div class="profile-card-big">
+
+<h2>My Profile</h2>
+
+<div class="profile-avatar" id="avatar">U</div>
+
+<input type="file" id="avatarFile" hidden accept="image/*">
+
+<button class="uploadBtn" onclick="chooseAvatar()">Upload Avatar</button>
+
+<input id="username" placeholder="Username">
+
+<button class="saveBtn" onclick="saveProfile()">Save Changes</button>
+
+<button class="backBtn" onclick="goHome()">Back</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+let currentUser=null
+let selectedFile=null
+
+
+function loadProfile(){
+
+const user=JSON.parse(localStorage.getItem("user"))
+
+if(!user){
+window.location="login.html"
+return
+}
+
+currentUser=user
+
+fetch("/api/profile/"+user.id)
+
+.then(res=>res.json())
+
+.then(data=>{
+
+document.getElementById("username").value=data.username
+
+if(data.avatar){
+
+document.getElementById("avatar").innerHTML=
+"<img src='"+data.avatar+"'>"
+
+}else{
+
+document.getElementById("avatar").innerText=
+data.username[0].toUpperCase()
+
+}
+
+})
+
+}
+
+
+/* CHỌN ẢNH */
+
+function chooseAvatar(){
+
+document.getElementById("avatarFile").click()
+
+}
+
+
+document.getElementById("avatarFile").addEventListener("change",function(){
+
+selectedFile=this.files[0]
+
+if(!selectedFile) return
+
+const reader=new FileReader()
+
+reader.onload=function(e){
+
+document.getElementById("avatar").innerHTML=
+"<img src='"+e.target.result+"'>"
+
+}
+
+reader.readAsDataURL(selectedFile)
+
+})
+
+
+/* SAVE PROFILE */
+
+async function saveProfile(){
+
+const username=document.getElementById("username").value
+
+/* upload avatar nếu có */
+
+if(selectedFile){
+
+const formData=new FormData()
+
+formData.append("avatar",selectedFile)
+formData.append("userId",currentUser.id)
+
+const res=await fetch("/api/users/avatar",{
+method:"POST",
+body:formData
+})
+
+const data=await res.json()
+
+currentUser.avatar=data.avatar
+
+}
+
+
+/* update username */
+
+await fetch("/api/profile/update",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+id:currentUser.id,
+username:username
+
+})
+
+})
+
+currentUser.username=username
+
+localStorage.setItem("user",JSON.stringify(currentUser))
+
+alert("Profile updated")
+
+}
+
+
+function goHome(){
+
+window.location="home.html"
+
+}
+
+
+loadProfile()
+
+</script>
+
+</body>
+</html>
